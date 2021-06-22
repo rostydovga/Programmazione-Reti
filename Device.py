@@ -4,94 +4,91 @@ import time
 import socket as sk
 from time import strftime
 
-RANGE_RILEVAZIONI = 24
+#costante usata per simulare le 24 ore
+RANGE_RILEVATION = 24
+GATEWAY_PORT = 10000
 
+#metodo per la generazione di temperatura ed umidità
 def generateInfo():
-
     t = random.randrange(0,35,1)
     u = abs(random.random()-(t//100))
     u = round(u,2)
-
     return t,u
 
+#metodo per il salvataggio dei dati nel file
 def saveOnFile(ip,hour,temp,umid):
+    #split dell'ip per nominare il file in modo esplicativo "device20.txt"
     a,b,c,d = ip.split('.')
     file = open(f'device{d}.txt','a')
     string = f'{hour} - {temp} - {umid}\n'
     file.write(string)
     file.close()
 
-
+#metodo per estrarre il contenuto del file
 def extractDataFromFile(ip):
     a,b,c,d = ip.split('.')
-    f = open(f'device{d}.txt','r+')
-    output = f.read()
-    #for line in f:
-    #    output += ip + ' - ' + line  
-    
-    f.close()
+    file = open(f'device{d}.txt','r+')
+    #viene salvato tutto il contenuto del file in output
+    output = file.read()
+    file.close()
     return output
 
+#metodo per pulire il contenuto del file, aprendolo in modalità 'write' e chiudendolo
 def cleanFile(ip):
     a,b,c,d = ip.split('.')
-    f = open(f'device{d}.txt','w') 
-    f.close()
+    file = open(f'device{d}.txt','w') 
+    file.close()
 
-
+#metodo per connettere il device al gateway e inviare i dati
 def sendData(message):        
-    # Create il socket UDP
+    #viene creato il socket UDP
     sock = sk.socket(sk.AF_INET, sk.SOCK_DGRAM)
-
-    gateway_address = ('localhost', 10000)
+    gateway_address = ('localhost',GATEWAY_PORT)
     try:
-
-        # inviate il messaggio
-        print ('sending "%s"' % message)
-        sent = sock.sendto(message.encode(), gateway_address)
-
+        #viene inviato il messaggio contenente le rilevazioni
+        print('sending "%s"' % message)
+        sock.sendto(message.encode(), gateway_address)
     except Exception as info:
         print(info)
     finally:
-        print ('closing socket')
+        print('closing socket')
         sock.close()
 
 
+'''
+    Classe Device
+'''
 class Device:
-    #ip del device
-    #timer tempo di misurazione per la temperatura
+    #ip: indirizzo ip del device
+    #timer: ogni quanto tempo vengono rilevati i dati dal terreno
     def __init__(self, ip, timer):
         self.ip = ip
         self.timer = timer
 
-    #funzione principale che runna il device indipendentemete l'uno dall'altro
+    #metodo principale per l'esecuzione del device
     def runDevice(self):
-        it = 0
         while True:
             #per sicurezza pulisco il file dai vecchi elementi, se presenti
             cleanFile(self.ip)
-            #rappresenta le misurazioni nelle 24 ore
-            for i in range(RANGE_RILEVAZIONI):
+            
+            #simula le misurazioni nelle 24 ore
+            for i in range(RANGE_RILEVATION):
                 #parte subito con l'aspettare la fine del timer
                 time.sleep(self.timer)
                 #genera i dati e prende l'orario corrente
                 temp, umid = generateInfo()       
-                ora = datetime.datetime.now().strftime('%H:%M:%S')
-                #salva nel file il contenuto
-                saveOnFile(self.ip,ora,temp,umid)
+                hour = datetime.datetime.now().strftime('%H:%M:%S')
+                
+                #salva nel file i dati 
+                saveOnFile(self.ip,hour,temp,umid)
 
-            print(f'Concluso il compito del device {self.ip}\n\n')
-            print('Elementi nel file:\n')
+            print(f'Device {self.ip} has completed the measurements\n')
             #estraggo i messaggi dal file 
             message = extractDataFromFile(self.ip)
-            #aggiungo all header di message l'ip del device corrente
-            #parte il tempo
+            #concateno a message l'ip del device corrente e il tempo 0, necessario alla misurazione tempistiche trasmissive del pacchetto UDP
             t0 = time.time()
             message = self.ip + '#' + str(t0) + '#' +  message
+            
             sendData(message)
             #dopo che è stato inviato il messaggio il file del device viene ripulito per ospitare nuove rilevazioni
-            cleanFile(self.ip)
-            it+=1
-            if it == 3 :
-                break
-
-        #quado arriva a 24 ore di salvataggi crea una connessione UDP verso gateway ed invia i dati
+            cleanFile(self.ip)         

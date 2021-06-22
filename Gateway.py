@@ -3,53 +3,51 @@ import sys, signal
 import time
 from threading import Thread
 
-IP_server_cloud = '10.10.10.1'
-port = 10000
+#costanti  
+IP_interface_to_server = '10.10.10.10'
+IP_gateway = '192.168.1.10'
+GATEWAY_PORT = 10000
+CLOUD_PORT = 9000
 BUFFSIZE = 2048
+
 #gateway deve conoscere gli ip dei 4 device
 ip_address_devices = ['192.168.1.20','192.168.1.21','192.168.1.22','192.168.1.23']
+#dizionario di tipo: ip --> rilevazioni
 dictionary_data = {}
-NUM_DEV = len(ip_address_devices)
 
-def accetta_connessioni_in_entrata():
-    
+#gestisce le connessioni in entrata
+def accept_connections():
     while True:
         try:
-            
-            data, address = sock.recvfrom(BUFFSIZE)
-    
-            print('received %s bytes from %s' % (len(data), address))
-            
+            data, address = sock.recvfrom(BUFFSIZE)    
+            print('Received %s bytes from %s' % (len(data), address))            
             #chiamo i thread per la gestione del client
-            Thread(target=gestione_client, args=(address,data,)).start()
-            
-            #gestione_client(address,data)
-
-            #dopo che tutti i client hanno inviato le misurazioni
-
-
-
+            Thread(target=data_management, args=(address,data,)).start()
         except KeyboardInterrupt:
             break
 
+#metodo che apre una connessione verso il cloud ed invia i dati
 def send_data_to_cloud(message):
     print('Send data to cloud...') 
     gatewaySocket = sk.socket(sk.AF_INET, sk.SOCK_STREAM)
     try:
         #si connette il gateway al cloud
-        gatewaySocket.connect(('127.0.0.1', 9000))
+        gatewaySocket.connect(('localhost',CLOUD_PORT))
+    
+        #si inviano i dati
+        gatewaySocket.send(message.encode())
+        response = gatewaySocket.recv(BUFFSIZE)
+        print(f'Response from cloud: {response.decode()}')
+        
     except Exception as data:
-        print(f'Errore di tipo {data}')
-    #si inviano i valori
-    gatewaySocket.send(message.encode())
-    response = gatewaySocket.recv(BUFFSIZE)
-    print(f'risposta dal cloud: {response.decode()}')
-    print('chiusura Socket del gateway...\n\n')
-    #si chiude il socket
-    gatewaySocket.close()
+        print(f'Error type: {data}')
+    finally:
+        #si chiude il socket
+        print('Closing gateway socket...\n\n')
+        gatewaySocket.close()
 
-
-def gestione_client(client,data):
+#elabora i dati e li invia al cloud
+def data_management(client,data):
     #estraggo l'Ip del client e le misurazioni
     ip_client ,t0 ,misurazioni = data.decode('utf8').split('#')
     
@@ -59,22 +57,20 @@ def gestione_client(client,data):
     #aggiungo gli elementi al dizionario
     dictionary_data[ip_client] = misurazioni
     
-    
     print(f'Time taken to transmit the UDP packet from: {ip_client} --> {t_final} seconds')
-        #Thread(target=send_data_to_cloud, args=(message,)).start()
-        #print(f'Messaggio per il server:\n{message}')
+    
+    #controllo di aver ricevuto le misurazioni da tutti i client
     if set(dictionary_data.keys()) == set(ip_address_devices):
         #creo le stringhe come richieste da progetto
-        message = create_Message_To_Server(dictionary_data)
-        print('RICEVUTE LE MISURAZIONI DI TUTTI I DEVICE')
+        message = create_message_to_server(dictionary_data)
+        print('Received all devices misurements')
+        #pulisco il dizionario per le misurazioni future
         dictionary_data.clear()
-        
+        #invio i dati al cloud
         send_data_to_cloud(message)
 
-        
-
-
-def create_Message_To_Server(dictionary):
+#si occupa di creare il messaggio come da richiesta progetto
+def create_message_to_server(dictionary):
     string = ''
     for key in dictionary.keys():
         #prelevo le misurazioni inerenti alla key(ip device)
@@ -82,23 +78,17 @@ def create_Message_To_Server(dictionary):
         #splitto le misurazioni in un array
         array = val.split('\n')
         #concateno tutte le stringhe 
-        string = string + add_Ip_to_Rilevation(key,array)
-
-    
+        string = string + add_ip_to_rilevation(key,array)
     return string
 
-
 #si occupa di concatenare l'ip del dispositivo alle rilevazioni
-def add_Ip_to_Rilevation(ip,ril):
+def add_ip_to_rilevation(ip,ril):
     output = ''
     for i in range(0,len(ril)-1,1):
         output = output + ip + ' - ' + ril[i] + '\n'
-    
     return output
         
-    
-
-
+#libera il socket ed esce dal programma
 def signal_handler(signal,frame):
     print('Closing the socket...')
     sock.close()
@@ -109,21 +99,15 @@ def signal_handler(signal,frame):
 sock = sk.socket(sk.AF_INET, sk.SOCK_DGRAM)
 
 # associamo il socket alla porta
-gateway_address = ('localhost', port)
-print ('\nstarting up on %s port %s' % gateway_address)
+gateway_address = ('', GATEWAY_PORT)
+print ('\nstarting up gateway on %s port %s' % gateway_address)
 sock.bind(gateway_address)
 signal.signal(signal.SIGINT,signal_handler)
 
 if __name__ == "__main__":
-    #sock.listen(5)
-    #accetta_connessioni_in_entrata()
-    thread_accettazione = Thread(target=accetta_connessioni_in_entrata)
-    thread_accettazione.start()
-    thread_accettazione.join()
+    accept_connections()
+    #thread_connections = Thread(target=accept_connections)
+    #thread_connections.start()
+    #thread_connections.join()
 
     sock.close()
-
-
-
-    
-    
