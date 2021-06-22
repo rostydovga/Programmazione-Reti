@@ -91,7 +91,7 @@ class Device:
             #dopo che è stato inviato il messaggio il file del device viene ripulito per ospitare nuove rilevazioni
             cleanFile(self.ip)
             it+=1
-            if it == 3:
+            if it == 3 :
                 break
 
         #quado arriva a 24 ore di salvataggi crea una connessione UDP verso gateway ed invia i dati
