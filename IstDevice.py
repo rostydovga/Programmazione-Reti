@@ -1,10 +1,7 @@
 from Device import Device
-import random
-import datetime
-from time import gmtime, strftime
 import threading
 
-TIMER_MISURAZIONE = 0.5
+TIMER_MISURAZIONE = 1
 ip_address_devices = ['192.168.1.20','192.168.1.21','192.168.1.22','192.168.1.23']
 
 def istanziaDevice(ip):

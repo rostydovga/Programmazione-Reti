@@ -1,0 +1,54 @@
+"""
+@author: Nicola
+Cloud
+"""
+
+import sys, signal, time
+import socket as sk
+
+CLOUD_ADDRESS = '10.10.10.2'
+CLOUD_PORT = 9000
+BUF_SIZE = 2048
+
+def signal_handler(signal, frame):
+    print( 'Exiting Cloud Server (Ctrl+C pressed)')
+    #si chiudono i socket il programma
+    gatewaySocket.close()
+    cloudSocket.close()
+    sys.exit(0)
+
+
+
+if __name__ == '__main__':
+    #si crea l'oggetto socket TCP
+    cloudSocket = sk.socket(sk.AF_INET, sk.SOCK_STREAM)
+    #si associa il socket alla porta e all'indirizzo
+    cloudSocket.bind(('', CLOUD_PORT))
+    #si abilita la connessione
+    cloudSocket.listen(1)
+    #se viene premuto Ctrl+C l'esecuzione si interrompe
+    signal.signal(signal.SIGINT, signal_handler)
+    print('Cloud Server ready...')
+    
+    while True:
+        #il socket si prepara ad accettare la connessione con il gateway
+        gatewaySocket, gatewayAddress = cloudSocket.accept()
+        print(f'gatewaySocket = {gatewaySocket}      gatewayAddress = {gatewayAddress}')
+        
+        try:
+            #parte il timer per calcolare il tempo impiegato
+            start = time.time()
+            #riceve il messaggio dal gateway
+            message = gatewaySocket.recv(BUF_SIZE)
+            #si calcola il tempo impiegato per ricevere il messaggio
+            end = round(time.time() - start, 5)
+            #si visualizzano i valori su console
+            print(message.decode('utf-8'))
+            print('Time taken to transmit the TCP packet:', end, 'seconds')
+            #si invia una risposta affermativa
+            gatewaySocket.send("Data Received!".encode())
+            #si rilascia il canale TCP
+            gatewaySocket.close()
+        except IOError:
+            gatewaySocket.send("Error During Trasmition!".encode())
+            gatewaySocket.close()
