@@ -8,8 +8,7 @@ BUF_SIZE = 4096
 #libera i socket ed esce dal programma
 def signal_handler(signal, frame):
     print('Exiting Cloud Server (Ctrl+C pressed)')
-    #si chiudono i socket il programma
-    gatewaySocket.close()
+    #si chiude il socket e il programma
     cloudSocket.close()
     sys.exit(0)
 
@@ -39,8 +38,7 @@ if __name__ == '__main__':
             end = time.time() - start
             #si visualizzano i valori su console
             print(message.decode('utf-8'))
-            #print('Time taken to transmit the TCP packet:', end, 'seconds\n\n')
-            print(f'Time taken to transmit the TCP packet: {end} seconds\n\n')
+            print('Time taken to transmit the TCP packet:', end, 'seconds\n\n')
             #si invia una risposta affermativa
             gatewaySocket.send("Data Received!".encode())
             #si rilascia il canale TCP

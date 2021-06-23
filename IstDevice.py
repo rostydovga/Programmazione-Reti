@@ -18,5 +18,5 @@ number_devices = len(ip_address_devices)
 for i in range(number_devices):
     x = threading.Thread(target=startDevice,args=(ip_address_devices[i],))
     x.start()
-    x.daemon_threads = True  
+    #x.daemon_threads = True  
     print(f'Creato device {ip_address_devices[i]}\n')
