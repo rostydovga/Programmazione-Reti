@@ -11,7 +11,7 @@ CLOUD_PORT = 9000
 BUFFSIZE = 2048
 
 #gateway deve conoscere gli ip dei 4 device
-ip_address_devices = ['192.168.1.20','192.168.1.21','192.168.1.22','192.168.1.23']
+ip_address_devices = set(['192.168.1.20','192.168.1.21','192.168.1.22','192.168.1.23'])
 #dizionario di tipo: ip --> rilevazioni
 dictionary_data = {}
 
@@ -60,7 +60,7 @@ def data_management(client,data):
     print(f'Time taken to transmit the UDP packet from: {ip_client} --> {t_final} seconds')
     
     #controllo di aver ricevuto le misurazioni da tutti i client
-    if set(dictionary_data.keys()) == set(ip_address_devices):
+    if set(dictionary_data.keys()) == ip_address_devices:
         #creo le stringhe come richieste da progetto
         message = create_message_to_server(dictionary_data)
         print('Received all devices misurements')
