@@ -1,3 +1,8 @@
+'''
+    Progetto Reti 2021 - Traccia 1 IoT
+    Nicola Costa - Rostyslav Dovganyuk
+'''
+
 import socket as sk
 import sys, signal
 import time
@@ -106,6 +111,7 @@ signal.signal(signal.SIGINT,signal_handler)
 
 if __name__ == "__main__":
     accept_connections()
+    #possibile utilizzare con i thread
     #thread_connections = Thread(target=accept_connections)
     #thread_connections.start()
     #thread_connections.join()

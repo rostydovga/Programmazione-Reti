@@ -1,3 +1,8 @@
+'''
+    Progetto Reti 2021 - Traccia 1 IoT
+    Nicola Costa - Rostyslav Dovganyuk
+'''
+
 #importo la classe Device da Device 
 from Device import Device
 import threading

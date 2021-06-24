@@ -1,3 +1,8 @@
+'''
+    Progetto Reti 2021 - Traccia 1 IoT
+    Nicola Costa - Rostyslav Dovganyuk
+'''
+
 import sys, signal, time
 import socket as sk
 
